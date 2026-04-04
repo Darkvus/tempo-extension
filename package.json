@@ -10,7 +10,8 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
-    "prepare": "wxt prepare"
+    "prepare": "wxt prepare",
+    "generate:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "vue": "^3.5.32"
