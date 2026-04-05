@@ -51,6 +51,8 @@ export interface WorkSession {
   session_id: string
   user_id: string
   started_at: string
+  paused_at: string | null
+  status: 'active' | 'paused'
   linked_project_id: string | null
   linked_task_id: string | null
 }
@@ -145,9 +147,12 @@ export async function startSession(payload: {
   return data
 }
 
-export async function resumeSession(sessionId: string): Promise<WorkSession> {
-  const { data } = await api.post(`/professional/work-sessions/${sessionId}/resume/`)
-  return data
+export async function pauseSession(sessionId: string): Promise<void> {
+  await api.post(`/professional/work-sessions/${sessionId}/pause/`)
+}
+
+export async function resumeSession(sessionId: string): Promise<void> {
+  await api.post(`/professional/work-sessions/${sessionId}/resume/`)
 }
 
 export async function stopSession(sessionId: string): Promise<void> {

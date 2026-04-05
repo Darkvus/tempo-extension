@@ -8,5 +8,9 @@ export function formatElapsed(seconds: number): string {
 
 /** Compute elapsed seconds from an ISO start_time string */
 export function elapsedSeconds(startTime: string): number {
-  return Math.floor((Date.now() - new Date(startTime).getTime()) / 1000)
+  // Ensure the string is treated as UTC if it has no timezone info
+  const normalized = startTime.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(startTime)
+    ? startTime
+    : startTime + 'Z'
+  return Math.max(0, Math.floor((Date.now() - new Date(normalized).getTime()) / 1000))
 }

@@ -18,7 +18,9 @@
     <template v-else-if="session">
       <div class="bg-neutral-900 rounded-xl p-4 space-y-3 border border-neutral-800">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-widest text-green-400">En curso</span>
+          <span class="text-xs font-semibold uppercase tracking-widest" :class="session.status === 'paused' ? 'text-amber-400' : 'text-green-400'">
+            {{ session.status === 'paused' ? 'Pausada' : 'En curso' }}
+          </span>
           <span class="font-mono text-lg font-bold text-white tabular-nums">{{ elapsed }}</span>
         </div>
 
@@ -29,6 +31,22 @@
 
         <!-- Actions -->
         <div class="flex gap-2 pt-1">
+          <button
+            v-if="session.status === 'active'"
+            @click="handlePause"
+            :disabled="acting"
+            class="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 disabled:opacity-40 transition-colors"
+          >
+            Pausar
+          </button>
+          <button
+            v-if="session.status === 'paused'"
+            @click="handleResume"
+            :disabled="acting"
+            class="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-black disabled:opacity-40 transition-colors"
+          >
+            Reanudar
+          </button>
           <button
             @click="handleStop"
             :disabled="acting"
@@ -76,6 +94,8 @@ import {
   getActiveSession,
   getProjects,
   startSession,
+  pauseSession,
+  resumeSession,
   stopSession,
   type TempoUser,
   type WorkSession,
@@ -121,7 +141,10 @@ onUnmounted(() => stopTicker())
 
 watch(session, (s) => {
   stopTicker()
-  if (s?.started_at) {
+  if (!s) return
+  if (s.status === 'paused' && s.paused_at) {
+    elapsedSecs.value = elapsedSeconds(s.started_at) - elapsedSeconds(s.paused_at)
+  } else if (s.status === 'active') {
     elapsedSecs.value = elapsedSeconds(s.started_at)
     ticker = setInterval(() => elapsedSecs.value++, 1000)
   }
@@ -158,6 +181,20 @@ async function handleStart() {
       user_id: props.user.user_id,
       project_id: selectedProjectId.value || undefined,
     })
+  })
+}
+
+async function handlePause() {
+  await withAction(async () => {
+    await pauseSession(session.value!.session_id)
+    session.value = await getActiveSession(props.user.user_id)
+  })
+}
+
+async function handleResume() {
+  await withAction(async () => {
+    await resumeSession(session.value!.session_id)
+    session.value = await getActiveSession(props.user.user_id)
   })
 }
 
