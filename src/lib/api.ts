@@ -39,6 +39,7 @@ export interface TempoUser {
   last_name: string
   email: string
   role: string
+  company?: { company_id: string; company_name: string; company_role: string } | null
 }
 
 export interface Company {
@@ -108,6 +109,7 @@ export async function login(username: string, password: string): Promise<TempoUs
     last_name: data.last_name,
     email: data.email,
     role: data.role,
+    company: data.company ?? null,
   }
   await setStoredUser(user)
   return user
@@ -125,9 +127,8 @@ export async function logout(): Promise<void> {
 
 export async function getMyCompanies(): Promise<Company[]> {
   const user = await getStoredUser()
-  if (!user) return []
-  const { data } = await api.get('/business/companies/', { params: { member_id: user.user_id } })
-  return data
+  if (!user?.company) return []
+  return [{ company_id: user.company.company_id, name: user.company.company_name }]
 }
 
 export async function getProjects(companyId: string): Promise<Project[]> {
