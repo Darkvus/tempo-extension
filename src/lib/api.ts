@@ -42,11 +42,6 @@ export interface TempoUser {
   company?: { company_id: string; company_name: string; company_role: string } | null
 }
 
-export interface Company {
-  company_id: string
-  name: string
-}
-
 export interface Project {
   project_id: string
   name: string
@@ -54,11 +49,10 @@ export interface Project {
 
 export interface WorkSession {
   session_id: string
-  start_time: string
-  end_time: string | null
-  status: 'active' | 'paused' | 'completed'
-  project_id: string | null
-  company_id: string
+  user_id: string
+  started_at: string
+  linked_project_id: string | null
+  linked_task_id: string | null
 }
 
 // ── Axios instance ─────────────────────────────────────────────────────────
@@ -125,12 +119,6 @@ export async function logout(): Promise<void> {
 
 // ── Companies & Projects ──────────────────────────────────────────────────
 
-export async function getMyCompanies(): Promise<Company[]> {
-  const user = await getStoredUser()
-  if (!user?.company) return []
-  return [{ company_id: user.company.company_id, name: user.company.company_name }]
-}
-
 export async function getProjects(companyId: string): Promise<Project[]> {
   const { data } = await api.get('/professional/projects/', { params: { company_id: companyId } })
   return data
@@ -140,11 +128,10 @@ export async function getProjects(companyId: string): Promise<Project[]> {
 
 export async function getActiveSession(userId: string): Promise<WorkSession | null> {
   try {
-    const { data } = await api.get('/professional/work-sessions/', {
-      params: { user_id: userId, status: 'active' },
+    const { data } = await api.get('/professional/work-sessions/active/', {
+      params: { user_id: userId },
     })
-    const sessions: WorkSession[] = Array.isArray(data) ? data : data.results ?? []
-    return sessions.find((s) => s.status === 'active') ?? null
+    return data
   } catch {
     return null
   }
@@ -152,24 +139,17 @@ export async function getActiveSession(userId: string): Promise<WorkSession | nu
 
 export async function startSession(payload: {
   user_id: string
-  company_id: string
   project_id?: string
 }): Promise<WorkSession> {
-  const { data } = await api.post('/professional/work-sessions/', payload)
-  return data
-}
-
-export async function pauseSession(sessionId: string): Promise<WorkSession> {
-  const { data } = await api.patch(`/professional/work-sessions/${sessionId}/`, { action: 'pause' })
+  const { data } = await api.post('/professional/work-sessions/start/', payload)
   return data
 }
 
 export async function resumeSession(sessionId: string): Promise<WorkSession> {
-  const { data } = await api.patch(`/professional/work-sessions/${sessionId}/`, { action: 'resume' })
+  const { data } = await api.post(`/professional/work-sessions/${sessionId}/resume/`)
   return data
 }
 
-export async function stopSession(sessionId: string): Promise<WorkSession> {
-  const { data } = await api.patch(`/professional/work-sessions/${sessionId}/`, { action: 'stop' })
-  return data
+export async function stopSession(sessionId: string): Promise<void> {
+  await api.post(`/professional/work-sessions/${sessionId}/stop/`)
 }
