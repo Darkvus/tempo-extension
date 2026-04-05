@@ -101,14 +101,13 @@ export async function login(username: string, password: string): Promise<TempoUs
   const { data } = await api.post('/users/auth/login', { username, password })
   await setTokens(data.access, data.refresh)
 
-  const { data: me } = await api.get(`/users/${data.user_id}`)
   const user: TempoUser = {
     user_id: data.user_id,
-    username: me.username,
-    first_name: me.first_name,
-    last_name: me.last_name,
-    email: me.email,
-    role: me.role,
+    username: data.username,
+    first_name: data.first_name,
+    last_name: data.last_name,
+    email: data.email,
+    role: data.role,
   }
   await setStoredUser(user)
   return user
@@ -140,7 +139,7 @@ export async function getProjects(companyId: string): Promise<Project[]> {
 
 export async function getActiveSession(userId: string): Promise<WorkSession | null> {
   try {
-    const { data } = await api.get('/professional/sessions/', {
+    const { data } = await api.get('/professional/work-sessions/', {
       params: { user_id: userId, status: 'active' },
     })
     const sessions: WorkSession[] = Array.isArray(data) ? data : data.results ?? []
@@ -155,21 +154,21 @@ export async function startSession(payload: {
   company_id: string
   project_id?: string
 }): Promise<WorkSession> {
-  const { data } = await api.post('/professional/sessions/', payload)
+  const { data } = await api.post('/professional/work-sessions/', payload)
   return data
 }
 
 export async function pauseSession(sessionId: string): Promise<WorkSession> {
-  const { data } = await api.patch(`/professional/sessions/${sessionId}/`, { action: 'pause' })
+  const { data } = await api.patch(`/professional/work-sessions/${sessionId}/`, { action: 'pause' })
   return data
 }
 
 export async function resumeSession(sessionId: string): Promise<WorkSession> {
-  const { data } = await api.patch(`/professional/sessions/${sessionId}/`, { action: 'resume' })
+  const { data } = await api.patch(`/professional/work-sessions/${sessionId}/`, { action: 'resume' })
   return data
 }
 
 export async function stopSession(sessionId: string): Promise<WorkSession> {
-  const { data } = await api.patch(`/professional/sessions/${sessionId}/`, { action: 'stop' })
+  const { data } = await api.patch(`/professional/work-sessions/${sessionId}/`, { action: 'stop' })
   return data
 }
