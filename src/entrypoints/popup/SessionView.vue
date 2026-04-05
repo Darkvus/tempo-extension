@@ -142,13 +142,14 @@ onUnmounted(() => stopTicker())
 watch(session, (s) => {
   stopTicker()
   if (!s) return
-  if (s.status === 'paused' && s.paused_at) {
-    elapsedSecs.value = elapsedSeconds(s.started_at) - elapsedSeconds(s.paused_at)
-  } else if (s.status === 'active') {
+  const isPaused = s.status === 'paused' || !!s.paused_at
+  if (isPaused && s.paused_at) {
+    elapsedSecs.value = Math.max(0, elapsedSeconds(s.started_at) - elapsedSeconds(s.paused_at))
+  } else {
     elapsedSecs.value = elapsedSeconds(s.started_at)
     ticker = setInterval(() => elapsedSecs.value++, 1000)
   }
-})
+}, { immediate: true })
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
