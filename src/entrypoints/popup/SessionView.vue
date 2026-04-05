@@ -160,8 +160,11 @@ const projectName = computed(() =>
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  await Promise.all([loadSession(), loadCompanies()])
-  loading.value = false
+  try {
+    await Promise.all([loadSession(), loadCompanies()])
+  } finally {
+    loading.value = false
+  }
 })
 
 onUnmounted(() => stopTicker())
@@ -192,8 +195,12 @@ async function loadSession() {
 }
 
 async function loadCompanies() {
-  companies.value = await getMyCompanies()
-  if (companies.value.length === 1) selectedCompanyId.value = companies.value[0].company_id
+  try {
+    companies.value = await getMyCompanies()
+    if (companies.value.length === 1) selectedCompanyId.value = companies.value[0].company_id
+  } catch {
+    companies.value = []
+  }
 }
 
 // ── Actions ────────────────────────────────────────────────────────────────
